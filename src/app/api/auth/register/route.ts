@@ -1,7 +1,7 @@
-// app/api/auth/register/route.ts  (or wherever your route is)
 import { NextResponse } from "next/server";
-import { db } from "@/lib/prisma";
+import { getDatabase } from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
+import type { User, UserResponse } from "@/types/user";
 
 export async function POST(req: Request) {
   try {
@@ -15,55 +15,73 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // quick email format check (very small footprint)
+    // Quick email format check
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 });
     }
 
-    // ensure Prisma connected (harmless if already connected)
-    try {
-      await db.$connect();
-    } catch (e) {
-      console.warn("Prisma connect warning:", e);
+    // Password strength check
+    if (password.length < 6) {
+      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
     }
 
-    const existingUser = await db.user.findUnique({ where: { email } });
+    // Get MongoDB database
+    const db = await getDatabase();
+    const usersCollection = db.collection<User>("users");
+
+    // Check if user already exists
+    const existingUser = await usersCollection.findOne({ email });
     if (existingUser) {
       return NextResponse.json({ error: "User already exists" }, { status: 400 });
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // use select to avoid returning columns with mismatched types
-    const user = await db.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        hasAcceptedTerms: true,
-      },
+    // Create user
+    const newUser: Omit<User, '_id'> = {
+      email,
+      password: hashedPassword,
+      name,
+      hasAcceptedTerms: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const result = await usersCollection.insertOne(newUser as User);
+
+    // Return user without password
+    const userResponse: UserResponse = {
+      id: result.insertedId.toString(),
+      email,
+      name,
+      hasAcceptedTerms: false,
+    };
+
+    // Create response with user data
+    const response = NextResponse.json({ user: userResponse }, { status: 201 });
+
+    // Set HTTP-only cookie for authentication
+    response.cookies.set('auth-token', result.insertedId.toString(), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
     });
 
-    return NextResponse.json({ user }, { status: 201 });
+    return response;
   } catch (error: any) {
-    // improved logging to help track the 22P03 issue
     console.error("Registration error:", {
       message: error?.message,
       code: error?.code,
-      meta: error?.meta,
       stack: error?.stack,
     });
 
-    // don't leak internals to client, but include small hint for dev
     return NextResponse.json(
       {
         error: "Internal server error",
-        hint: error?.code ? `${error.code}` : undefined,
+        hint: process.env.NODE_ENV === 'development' ? error?.message : undefined,
       },
       { status: 500 }
     );

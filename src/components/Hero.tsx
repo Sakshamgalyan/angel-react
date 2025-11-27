@@ -46,102 +46,131 @@ const Hero = () => {
   };
 
   return (
-    <section className="flex flex-col items-center justify-center pt-20 pb-12 px-4">
-      <div className="w-full max-w-2xl bg-[#1A1D26] border border-gray-700 rounded-lg p-8 shadow-xl">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Instrument Symbol */}
-          <div>
-            <h3 className="text-white font-semibold mb-2 text-left">Instrument Symbol:</h3>
-            <FormInput
-              label="e.g., RELIANCE-EQ, NIFTY25JUL22000CE"
-              name="instrumentSymbol"
-              value={formData.instrumentSymbol}
-              onChange={handleInputChange}
-              className="rounded-md bg-[#0B0E14]"
-            />
-            <div className="mt-2 text-left">
-              <a 
-                href="#" 
-                className="text-blue-400 hover:text-blue-300 text-sm inline-flex items-center gap-1"
-              >
-                <span className="text-red-500">📍</span>
-                View accepted symbol formats
-              </a>
-            </div>
-          </div>
+    <section className="flex flex-col items-center justify-center pt-12 sm:pt-16 lg:pt-20 pb-8 sm:pb-12 px-4 relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div 
+        className="absolute inset-0 opacity-30"
+        style={{ background: 'var(--gradient-mesh)' }}
+      />
+      
+      {/* Floating orbs */}
+      <div className="absolute top-10 left-10 w-64 h-64 bg-purple-400 dark:bg-purple-600 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-20 animate-float-slow" />
+      <div className="absolute bottom-10 right-10 w-64 h-64 bg-blue-400 dark:bg-blue-600 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-20 animate-float" style={{ animationDelay: '2s' }} />
 
-          {/* Timeframe */}
-          <div>
-            <h3 className="text-white font-semibold mb-2 text-left">Timeframe:</h3>
-            <Select
-              label="Select Timeframe"
-              name="timeframe"
-              options={timeframeOptions}
-              value={formData.timeframe}
-              onChange={handleInputChange}
-              className="rounded-md bg-[#0B0E14]"
-            />
-          </div>
-
-          {/* Data Time */}
-          <div>
-            <h3 className="text-white font-semibold mb-2 text-left">
-              Data Time (optional, YYYY-MM-DD HH:MM IST):
-            </h3>
-            <FormInput
-              label="e.g., 2025-07-29 12:00"
-              name="dataTime"
-              value={formData.dataTime}
-              onChange={handleInputChange}
-              className="rounded-md bg-[#0B0E14]"
-            />
-            <p className="mt-2 text-sm text-gray-400 text-left">
-              Data Time is optional, defaults to current time (market close if after 15:30 in IST).
+      <div className="w-full max-w-3xl relative z-10 animate-slide-in-up">
+        {/* Glass card with 3D floating effect */}
+        <div className="bg-white/80 dark:bg-[#1E2329]/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-3d animate-float">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400 mb-3">
+              Market Analysis
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+              Get comprehensive stock market insights in real-time
             </p>
           </div>
 
-          {/* Select Data to Fetch */}
-          <div>
-            <h3 className="text-white font-semibold mb-3 text-left">Select Data to Fetch</h3>
-            <div className="space-y-3 bg-[#0B0E14] border border-gray-700 rounded-md p-4">
-              <Checkbox
-                label="Include Technical Indicators"
-                name="includeTechnicalIndicators"
-                checked={formData.includeTechnicalIndicators}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Instrument Symbol */}
+            <div>
+              <h3 className="text-gray-900 dark:text-white font-semibold mb-3 text-left text-sm sm:text-base">
+                Instrument Symbol
+              </h3>
+              <FormInput
+                label="e.g., RELIANCE-EQ, NIFTY25JUL22000CE"
+                name="instrumentSymbol"
+                value={formData.instrumentSymbol}
                 onChange={handleInputChange}
               />
-              <Checkbox
-                label="Include Fundamentals"
-                name="includeFundamentals"
-                checked={formData.includeFundamentals}
-                onChange={handleInputChange}
-              />
-              <Checkbox
-                label="Include News & Sentiment"
-                name="includeNewsSentiment"
-                checked={formData.includeNewsSentiment}
-                onChange={handleInputChange}
-              />
-              <Checkbox
-                label="Include Peer/Beta Analysis"
-                name="includePeerBetaAnalysis"
-                checked={formData.includePeerBetaAnalysis}
+              <div className="mt-2 text-left">
+                <a 
+                  href="#" 
+                  className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 text-xs sm:text-sm inline-flex items-center gap-1 transition-colors"
+                >
+                  <span className="text-red-500">📍</span>
+                  View accepted symbol formats
+                </a>
+              </div>
+            </div>
+
+            {/* Timeframe */}
+            <div>
+              <h3 className="text-gray-900 dark:text-white font-semibold mb-3 text-left text-sm sm:text-base">
+                Timeframe
+              </h3>
+              <Select
+                label="Select Timeframe"
+                name="timeframe"
+                options={timeframeOptions}
+                value={formData.timeframe}
                 onChange={handleInputChange}
               />
             </div>
-          </div>
 
-          {/* Submit Button */}
-          <div className="pt-2">
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full py-3 text-base font-semibold"
-            >
-              📊 Submit
-            </Button>
-          </div>
-        </form>
+            {/* Data Time */}
+            <div>
+              <h3 className="text-gray-900 dark:text-white font-semibold mb-3 text-left text-sm sm:text-base">
+                Data Time <span className="text-gray-500 dark:text-gray-400 font-normal text-xs">(optional, YYYY-MM-DD HH:MM IST)</span>
+              </h3>
+              <FormInput
+                label="e.g., 2025-07-29 12:00"
+                name="dataTime"
+                value={formData.dataTime}
+                onChange={handleInputChange}
+              />
+              <p className="mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-left">
+                Data Time is optional, defaults to current time (market close if after 15:30 in IST).
+              </p>
+            </div>
+
+            {/* Select Data to Fetch */}
+            <div>
+              <h3 className="text-gray-900 dark:text-white font-semibold mb-4 text-left text-sm sm:text-base">
+                Select Data to Fetch
+              </h3>
+              <div className="space-y-3 bg-gray-50/80 dark:bg-[#0B0E14]/50 border border-gray-200/50 dark:border-gray-700/50 rounded-xl p-4 sm:p-5 backdrop-blur-sm">
+                <Checkbox
+                  label="Include Technical Indicators"
+                  name="includeTechnicalIndicators"
+                  checked={formData.includeTechnicalIndicators}
+                  onChange={handleInputChange}
+                />
+                <Checkbox
+                  label="Include Fundamentals"
+                  name="includeFundamentals"
+                  checked={formData.includeFundamentals}
+                  onChange={handleInputChange}
+                />
+                <Checkbox
+                  label="Include News & Sentiment"
+                  name="includeNewsSentiment"
+                  checked={formData.includeNewsSentiment}
+                  onChange={handleInputChange}
+                />
+                <Checkbox
+                  label="Include Peer/Beta Analysis"
+                  name="includePeerBetaAnalysis"
+                  checked={formData.includePeerBetaAnalysis}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="pt-2">
+              <Button
+                type="submit"
+                variant="gradient"
+                size="lg"
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Analyze Market Data
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
     </section>
   );
