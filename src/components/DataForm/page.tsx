@@ -1,23 +1,19 @@
 "use client";
 
-import React, { useState } from 'react';
-
-export type FormDataShape = {
-  symbol: string;
-  timeframe: string;
-  data_time?: string;
-  technicals: string;
-  fundamentals: string;
-  news: string;
-  peers: string;
-};
+import React, { useState, useMemo, useCallback } from 'react';
+import Input from '../Input/Input';
+import Select from '../Select/Select';
+import Checkbox from '../Checkbox/Checkbox';
+import Button from '../Button/Button';
+import Icon from '../Icon/Icon';
+import type { FormDataShape } from '@/types/types';
 
 type DataFormProps = {
   onSubmit: (data: FormDataShape) => void;
   loading?: boolean;
 };
 
-function DataForm({ onSubmit, loading = false }: DataFormProps) {
+const DataForm = React.memo(({ onSubmit, loading = false }: DataFormProps) => {
   const [symbol, setSymbol] = useState('');
   const [timeframe, setTimeframe] = useState('');
   const [dataTime, setDataTime] = useState('');
@@ -26,7 +22,25 @@ function DataForm({ onSubmit, loading = false }: DataFormProps) {
   const [news, setNews] = useState(false);
   const [peers, setPeers] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const timeframeOptions = useMemo(() => [
+    { value: '1min', label: '1 Minute' },
+    { value: '3min', label: '3 Minutes' },
+    { value: '5min', label: '5 Minutes' },
+    { value: '10min', label: '10 Minutes' },
+    { value: '15min', label: '15 Minutes' },
+    { value: '30min', label: '30 Minutes' },
+    { value: '1hr', label: '1 Hour' },
+    { value: '1day', label: '1 Day' },
+  ], []);
+
+  const checkboxOptions = useMemo(() => [
+    { id: 'technicals', label: 'Technical Indicators', state: technicals, setter: setTechnicals, icon: '📈' },
+    { id: 'fundamentals', label: 'Fundamentals', state: fundamentals, setter: setFundamentals, icon: '🏢' },
+    { id: 'news', label: 'News & Sentiment', state: news, setter: setNews, icon: '📰' },
+    { id: 'peers', label: 'Peer/Beta Analysis', state: peers, setter: setPeers, icon: '👥' }
+  ], [technicals, fundamentals, news, peers]);
+
+  const handleSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Validate data_time format
@@ -35,7 +49,7 @@ function DataForm({ onSubmit, loading = false }: DataFormProps) {
       return;
     }
 
-    const formData = {
+    const formData: FormDataShape = {
       symbol: symbol.trim().toUpperCase(),
       timeframe,
       data_time: dataTime,
@@ -46,78 +60,45 @@ function DataForm({ onSubmit, loading = false }: DataFormProps) {
     };
 
     onSubmit(formData);
-  };
+  }, [symbol, timeframe, dataTime, technicals, fundamentals, news, peers, onSubmit]);
 
   return (
     <form id="dataForm" onSubmit={handleSubmit} className="w-full glass-card rounded-2xl p-4 sm:p-6 md:p-8 animate-fade-in">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
         <div className="space-y-6">
-          <div className="relative group">
-            <label htmlFor="symbol" className="block text-sm font-medium text-muted-foreground mb-2 group-focus-within:text-primary transition-colors">Instrument Symbol <span className="text-red-500">*</span></label>
-            <input
-              type="text"
-              id="symbol"
-              name="symbol"
-              required
-              placeholder="e.g., RELIANCE-EQ"
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value)}
-              disabled={loading}
-              className="w-full px-4 py-3 rounded-xl bg-background border border-input focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 outline-none font-medium"
-            />
-          </div>
+          <Input
+            id="symbol"
+            name="symbol"
+            label="Instrument Symbol"
+            placeholder="e.g., RELIANCE-EQ"
+            value={symbol}
+            onChange={setSymbol}
+            required
+            disabled={loading}
+          />
 
-          <div className="relative group">
-            <label htmlFor="timeframe" className="block text-sm font-medium text-muted-foreground mb-2 group-focus-within:text-primary transition-colors">Timeframe <span className="text-red-500">*</span></label>
-            <div className="relative">
-              <select 
-                id="timeframe" 
-                name="timeframe" 
-                required 
-                value={timeframe} 
-                onChange={(e) => setTimeframe(e.target.value)} 
-                disabled={loading}
-                className="w-full px-4 py-3 rounded-xl bg-background border border-input focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 outline-none font-medium appearance-none"
-              >
-                <option value="">Select Timeframe</option>
-                <option value="1min">1 Minute</option>
-                <option value="3min">3 Minutes</option>
-                <option value="5min">5 Minutes</option>
-                <option value="10min">10 Minutes</option>
-                <option value="15min">15 Minutes</option>
-                <option value="30min">30 Minutes</option>
-                <option value="1hr">1 Hour</option>
-                <option value="1day">1 Day</option>
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m6 9 6 6 6-6"/>
-                </svg>
-              </div>
-            </div>
-          </div>
+          <Select
+            id="timeframe"
+            name="timeframe"
+            label="Timeframe"
+            options={timeframeOptions}
+            value={timeframe}
+            onChange={setTimeframe}
+            required
+            disabled={loading}
+            placeholder="Select Timeframe"
+          />
 
-          <div className="relative group">
-            <label htmlFor="data_time" className="block text-sm font-medium text-muted-foreground mb-2 group-focus-within:text-primary transition-colors">Data Time (optional)</label>
-            <input
-              type="text"
-              id="data_time"
-              name="data_time"
-              placeholder="YYYY-MM-DD HH:MM (IST)"
-              value={dataTime}
-              onChange={(e) => setDataTime(e.target.value)}
-              disabled={loading}
-              className="w-full px-4 py-3 rounded-xl bg-background border border-input focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 outline-none font-medium"
-            />
-            <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-              </svg>
-              Defaults to current time or market close if after 15:30 IST
-            </p>
-          </div>
+          <Input
+            id="data_time"
+            name="data_time"
+            label="Data Time (optional)"
+            placeholder="YYYY-MM-DD HH:MM (IST)"
+            value={dataTime}
+            onChange={setDataTime}
+            disabled={loading}
+            helperText="Defaults to current time or market close if after 15:30 IST"
+          />
         </div>
 
         <div className="flex flex-col h-full">
@@ -128,35 +109,17 @@ function DataForm({ onSubmit, loading = false }: DataFormProps) {
             </legend>
             
             <div className="grid grid-cols-1 gap-4 mt-2">
-              {[
-                { id: 'technicals', label: 'Technical Indicators', state: technicals, setter: setTechnicals, icon: '📈' },
-                { id: 'fundamentals', label: 'Fundamentals', state: fundamentals, setter: setFundamentals, icon: '🏢' },
-                { id: 'news', label: 'News & Sentiment', state: news, setter: setNews, icon: '📰' },
-                { id: 'peers', label: 'Peer/Beta Analysis', state: peers, setter: setPeers, icon: '👥' }
-              ].map((item) => (
-                <label 
+              {checkboxOptions.map((item) => (
+                <Checkbox
                   key={item.id}
-                  className={`flex items-center p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
-                    item.state 
-                      ? 'bg-primary/5 border-primary/50 shadow-sm' 
-                      : 'bg-background border-border hover:border-primary/30 hover:bg-secondary/50'
-                  }`}
-                >
-                  <div className="relative flex items-center justify-center w-5 h-5 mr-4">
-                    <input 
-                      type="checkbox" 
-                      name={item.id} 
-                      checked={item.state} 
-                      onChange={(e) => item.setter(e.target.checked)}
-                      className="peer appearance-none w-5 h-5 border-2 border-muted-foreground rounded checked:bg-primary checked:border-primary transition-colors"
-                    />
-                    <svg className="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                  </div>
-                  <span className="flex-1 font-medium text-foreground">{item.label}</span>
-                  <span className="text-lg opacity-70">{item.icon}</span>
-                </label>
+                  id={item.id}
+                  name={item.id}
+                  label={item.label}
+                  checked={item.state}
+                  onChange={item.setter}
+                  disabled={loading}
+                  icon={item.icon}
+                />
               ))}
             </div>
           </fieldset>
@@ -164,35 +127,15 @@ function DataForm({ onSubmit, loading = false }: DataFormProps) {
       </div>
 
       <div className="mt-8 flex justify-end">
-        <button 
-          type="submit" 
-          disabled={loading} 
-          className="relative overflow-hidden group px-8 py-3 rounded-xl bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
-        >
-          <span className="relative z-10 flex items-center gap-2">
-            {loading ? (
-              <>
-                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Processing...
-              </>
-            ) : (
-              <>
-                <span>Fetch Analysis</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-x-1 transition-transform">
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                  <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-              </>
-            )}
-          </span>
-          <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-        </button>
+        <Button type="submit" loading={loading} disabled={loading}>
+          <span>Fetch Analysis</span>
+          <Icon name="arrow-right" size={18} className="group-hover:translate-x-1 transition-transform" />
+        </Button>
       </div>
     </form>
   );
-}
+});
+
+DataForm.displayName = 'DataForm';
 
 export default DataForm;

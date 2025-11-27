@@ -1,0 +1,221 @@
+'use client';
+
+import { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { useDispatch, useSelector } from 'react-redux';
+import { motion } from 'framer-motion';
+import { registerUser } from '@/store/slices/authSlice';
+import type { AppDispatch, RootState } from '@/store/store';
+import Link from 'next/link';
+
+export default function RegisterPage() {
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const { loading, error } = useSelector((state: RootState) => state.auth);
+  
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+
+  const [validationError, setValidationError] = useState('');
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setValidationError('');
+
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setValidationError('Passwords do not match');
+      return;
+    }
+
+    // Validate password strength
+    if (formData.password.length < 6) {
+      setValidationError('Password must be at least 6 characters');
+      return;
+    }
+
+    const result = await dispatch(registerUser({
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+    }));
+    
+    if (registerUser.fulfilled.match(result)) {
+      router.push('/privacy');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-background to-blue-50 dark:from-slate-900 dark:via-background dark:to-slate-800 px-4 py-12">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-10 right-20 w-80 h-80 bg-purple-400/20 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.4, 0.6, 0.4],
+          }}
+          transition={{
+            duration: 9,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+        <motion.div
+          className="absolute bottom-10 left-20 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl"
+          animate={{
+            scale: [1.3, 1, 1.3],
+            opacity: [0.6, 0.4, 0.6],
+          }}
+          transition={{
+            duration: 11,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md relative z-10"
+      >
+        <div className="glass-card rounded-2xl p-8 shadow-2xl">
+          <motion.div
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-center mb-8"
+          >
+            <h1 className="text-4xl font-bold mb-2">
+              Create <span className="text-gradient">Account</span>
+            </h1>
+            <p className="text-muted-foreground">Join us today</p>
+          </motion.div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <motion.div
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <label htmlFor="name" className="block text-sm font-medium mb-2">
+                Full Name
+              </label>
+              <input
+                id="name"
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-4 py-3 rounded-lg bg-background/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                placeholder="John Doe"
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.35 }}
+            >
+              <label htmlFor="email" className="block text-sm font-medium mb-2">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-4 py-3 rounded-lg bg-background/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                placeholder="you@example.com"
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              <label htmlFor="password" className="block text-sm font-medium mb-2">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="w-full px-4 py-3 rounded-lg bg-background/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                placeholder="••••••••"
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.45 }}
+            >
+              <label htmlFor="confirmPassword" className="block text-sm font-medium mb-2">
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                required
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                className="w-full px-4 py-3 rounded-lg bg-background/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                placeholder="••••••••"
+              />
+            </motion.div>
+
+            {(error || validationError) && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm"
+              >
+                {error || validationError}
+              </motion.div>
+            )}
+
+            <motion.button
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-lg shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Creating account...' : 'Create Account'}
+            </motion.button>
+          </form>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="mt-6 text-center text-sm"
+          >
+            <p className="text-muted-foreground">
+              Already have an account?{' '}
+              <Link
+                href="/login"
+                className="text-primary hover:underline font-semibold"
+              >
+                Sign in
+              </Link>
+            </p>
+          </motion.div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
