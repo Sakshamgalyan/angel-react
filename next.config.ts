@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  serverExternalPackages: ['smartapi-javascript', 'got', 'keyv', 'public-ip', 'totp-generator'],
 };
 
 export default nextConfig;

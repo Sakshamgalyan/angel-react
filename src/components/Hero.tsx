@@ -17,22 +17,60 @@ const Hero = () => {
     includePeerBetaAnalysis: false,
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const timeframeOptions = [
-    { value: '1m', label: '1 Minute' },
-    { value: '5m', label: '5 Minutes' },
-    { value: '15m', label: '15 Minutes' },
-    { value: '30m', label: '30 Minutes' },
-    { value: '1h', label: '1 Hour' },
-    { value: '4h', label: '4 Hours' },
-    { value: '1d', label: '1 Day' },
-    { value: '1w', label: '1 Week' },
-    { value: '1M', label: '1 Month' },
+    { value: '1min', label: '1 Minute' },
+    { value: '3min', label: '3 Minutes' },
+    { value: '5min', label: '5 Minutes' },
+    { value: '10min', label: '10 Minutes' },
+    { value: '15min', label: '15 Minutes' },
+    { value: '30min', label: '30 Minutes' },
+    { value: '1hr', label: '1 Hour' },
+    { value: '1day', label: '1 Day' },
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // Handle form submission logic here
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          symbol: formData.instrumentSymbol,
+          timeframe: formData.timeframe,
+          data_time: formData.dataTime || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch analysis');
+      }
+
+      // Handle file download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${formData.instrumentSymbol}_${formData.timeframe}_analysis.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+    } catch (err: any) {
+      console.error('Analysis failed:', err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -70,6 +108,13 @@ const Hero = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Error Message */}
+            {error && (
+              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm animate-slide-in-down">
+                {error}
+              </div>
+            )}
+
             {/* Instrument Symbol */}
             <div>
               <h3 className="text-gray-900 dark:text-white font-semibold mb-3 text-left text-sm sm:text-base">
@@ -162,11 +207,24 @@ const Hero = () => {
                 variant="gradient"
                 size="lg"
                 className="w-full flex items-center justify-center gap-2"
+                disabled={isLoading}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                Analyze Market Data
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Analyze Market Data
+                  </>
+                )}
               </Button>
             </div>
           </form>
