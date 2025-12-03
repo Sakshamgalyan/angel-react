@@ -44,38 +44,135 @@ export const getAngelClient = async () => {
     }
 };
 
+// Retry helper
+const retry = async <T>(fn: () => Promise<T>, retries = 3, delay = 500): Promise<T> => {
+    try {
+        return await fn();
+    } catch (error: any) {
+        if (retries > 0) {
+            // Check for session expiry (AB1004)
+            if (error.message && error.message.toLowerCase().includes('ab1004')) {
+                console.log('Session expired (AB1004), re-authenticating...');
+                smartApiInstance = null;
+                sessionData = null;
+                await getAngelClient();
+            }
+
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return retry(fn, retries - 1, delay * 2);
+        }
+        throw error;
+    }
+};
+
 export const fetchCandleData = async (
     exchange: string,
     symbolToken: string,
     interval: string,
     fromDate: string,
     toDate: string
-): Promise<CandleData[]> => {
-    const client = await getAngelClient();
+): Promise<any[]> => {
+    return retry(async () => {
+        const client = await getAngelClient();
+        try {
+            const response = await client.getCandleData({
+                exchange,
+                symboltoken: symbolToken,
+                interval,
+                fromdate: fromDate,
+                todate: toDate,
+            });
 
-    try {
-        const response = await client.getCandleData({
-            exchange,
-            symboltoken: symbolToken,
-            interval,
-            fromdate: fromDate,
-            todate: toDate,
-        });
-
-        if (response.status && response.data) {
-            return response.data.map((candle: any[]) => ({
-                timestamp: candle[0],
-                open: candle[1],
-                high: candle[2],
-                low: candle[3],
-                close: candle[4],
-                volume: candle[5],
-            }));
-        } else {
-            throw new Error(response.message || 'Failed to fetch candle data');
+            if (response.status && response.data) {
+                return response.data;
+            } else {
+                throw new Error(response.message || 'Failed to fetch candle data');
+            }
+        } catch (error) {
+            console.error('Error fetching candle data:', error);
+            throw error;
         }
-    } catch (error) {
-        console.error('Error fetching candle data:', error);
-        throw error;
-    }
+    });
+};
+
+export const fetchOIData = async (
+    exchange: string,
+    symbolToken: string,
+    interval: string,
+    fromDate: string,
+    toDate: string
+): Promise<any[]> => {
+    return retry(async () => {
+        const client = await getAngelClient();
+        try {
+            const response = await client.getOIData({
+                exchange,
+                symboltoken: symbolToken,
+                interval,
+                fromdate: fromDate,
+                todate: toDate,
+            });
+
+            if (response.status && response.data) {
+                return response.data;
+            } else {
+                console.warn('OI data fetch failed:', response.message);
+                return [];
+            }
+        } catch (error) {
+            console.error('Error fetching OI data:', error);
+            return [];
+        }
+    });
+};
+
+export const fetchMarketData = async (
+    mode: string,
+    exchangeTokens: Record<string, string[]>
+): Promise<any[]> => {
+    return retry(async () => {
+        const client = await getAngelClient();
+        try {
+            const response = await client.marketData({
+                mode: mode,
+                exchangeTokens: exchangeTokens
+            });
+
+            if (response.status && response.data) {
+                const fetched = response.data.fetched || [];
+                return fetched;
+            } else {
+                console.warn('Market data fetch failed:', response.message || 'Unknown error');
+                return [];
+            }
+        } catch (error) {
+            console.error('Error fetching market data:', error);
+            return [];
+        }
+    });
+};
+
+export const fetchOptionGreeks = async (
+    name: string,
+    expiryDate: string
+): Promise<any[]> => {
+    return retry(async () => {
+        const client = await getAngelClient();
+        try {
+            const response = await client.optionGreek({
+                name,
+                expirydate: expiryDate,
+            });
+
+            if (response.status && response.data) {
+                return response.data;
+            } else {
+                console.warn('Option greeks fetch failed:', response.message);
+                return [];
+            }
+        } catch (error) {
+            console.error('Error fetching option greeks:', error);
+            return [];
+        }
+    });
 };
