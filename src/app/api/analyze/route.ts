@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { fetchCandleData, fetchOIData, fetchMarketData, fetchOptionGreeks } from '@/lib/angel';
-import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import * as XLSX from 'xlsx';
+import { fetchTechnicalIndicators } from '@/lib/technical-indicators';
 
 // Helper to find symbol info
 const getSymbolInfo = (symbol: string) => {
@@ -113,7 +113,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing symbol or timeframe' }, { status: 400 });
         }
 
-        console.log(`Received request: symbol=${symbol}, timeframe=${timeframe}, data_time=${data_time}`);
+        console.log(`Received request: symbol=${symbol}, timeframe=${timeframe}, data_time=${data_time}, technicals=${technicals}`);
 
         // 1. Get Symbol Info
         const symbolInfo = getSymbolInfo(symbol);
@@ -290,103 +290,54 @@ export async function POST(req: Request) {
             ...marketDataValues
         };
 
-        // 5. Run Python Script for Technical Indicators if requested
-        if (technicals === "True" && candles.length > 0) {
-            try {
-                const pythonScriptPath = path.join(process.cwd(), 'technical_indicators.py');
+        // 5. Calculate Technical Indicators (TypeScript)
+        const isTechnicalsEnabled = String(technicals).toLowerCase() === 'true';
+        if (isTechnicalsEnabled && candles.length > 0) {
+                try {
+                    console.log(`[Debug] Calculating technical indicators for ${candles.length} candles...`);
+                    // Check if candles have correct shape
+                    if (candles.length > 0) {
+                        console.log(`[Debug] First candle sample: ${JSON.stringify(candles[0])}`);
+                    }
 
-                if (!fs.existsSync(pythonScriptPath)) {
-                    console.error('technical_indicators.py not found');
-                    return NextResponse.json({ error: 'Technical indicators script not found' }, { status: 500 });
+                    const latestRow = fetchTechnicalIndicators(candles);
+                    console.log('[Debug] Technical indicators calculated successfully.');
+
+                    // Add OHLCV data
+                    result.timestamp = latestRow.timestamp;
+                    result.open = latestRow.open;
+                    result.high = latestRow.high;
+                    result.low = latestRow.low;
+                    result.close = latestRow.close;
+                    result.volume = latestRow.volume;
+    
+                    for (const col of INDICATOR_COLUMNS) {
+                        result[col] = latestRow[col] || 0;
+                    }
+    
+                    // Add OI and option greeks if available
+                    result.LatestOI = latestOI;
+                    if (Object.keys(optionGreeksData).length > 0) {
+                        result.delta = optionGreeksData.delta;
+                        result.gamma = optionGreeksData.gamma;
+                        result.theta = optionGreeksData.theta;
+                        result.vega = optionGreeksData.vega;
+                        result.impliedVolatility = optionGreeksData.impliedVolatility;
+                        result.optionTradeVolume = optionGreeksData.optionTradeVolume;
+                    }
+    
+                } catch (error: any) {
+                    console.error('[CRITICAL ERROR] Error computing technical indicators in route.ts:', error);
+                    console.error('[CRITICAL ERROR] Stack:', error.stack);
+                    console.error('[CRITICAL ERROR] Input Candles Length:', candles.length);
+                    if (candles.length > 0) console.error('[CRITICAL ERROR] First Candle:', JSON.stringify(candles[0]));
+                    
+                    return NextResponse.json({
+                        status: 'error',
+                        message: `Failed to compute indicators: ${error.message}`,
+                        stack: error.stack
+                    }, { status: 500 });
                 }
-
-                const userHome = process.env.HOME || process.env.USERPROFILE || '';
-                const pythonPath = [
-                    `${userHome}/.local/lib/python3.12/site-packages`,
-                    '/usr/local/lib/python3.12/dist-packages',
-                    '/usr/lib/python3/dist-packages',
-                ].filter(Boolean).join(':');
-
-                const pythonProcess = spawn('python3', ['-c', `
-import sys
-import json
-from technical_indicators import fetch_technical_indicators
-
-candles = json.loads(sys.stdin.read())
-df = fetch_technical_indicators(candles)
-latest_row = df.tail(1).iloc[0]
-print(json.dumps(latest_row.to_dict(), default=str))
-                `], {
-                    env: {
-                        ...process.env,
-                        HOME: userHome,
-                        PATH: process.env.PATH || '',
-                        PYTHONPATH: `${process.cwd()}:${pythonPath}`,
-                        PYTHONIOENCODING: 'utf-8',
-                    },
-                    cwd: process.cwd()
-                });
-
-                let resultData = '';
-                let errorData = '';
-
-                const pythonPromise = new Promise<any>((resolve, reject) => {
-                    pythonProcess.stdout.on('data', (data) => {
-                        resultData += data.toString();
-                    });
-
-                    pythonProcess.stderr.on('data', (data) => {
-                        errorData += data.toString();
-                    });
-
-                    pythonProcess.on('close', (code) => {
-                        if (code !== 0) {
-                            reject(new Error(`Python script exited with code ${code}: ${errorData}`));
-                        } else {
-                            try {
-                                resolve(JSON.parse(resultData));
-                            } catch (e) {
-                                reject(new Error(`Failed to parse Python output: ${resultData}`));
-                            }
-                        }
-                    });
-
-                    pythonProcess.stdin.write(JSON.stringify(candles));
-                    pythonProcess.stdin.end();
-                });
-
-                const latestRow = await pythonPromise;
-
-                // Add OHLCV data
-                result.timestamp = latestRow.timestamp;
-                result.open = parseFloat(latestRow.open || 0);
-                result.high = parseFloat(latestRow.high || 0);
-                result.low = parseFloat(latestRow.low || 0);
-                result.close = parseFloat(latestRow.close || 0);
-                result.volume = parseFloat(latestRow.volume || 0);
-
-                for (const col of INDICATOR_COLUMNS) {
-                    result[col] = parseFloat(latestRow[col] || 0);
-                }
-
-                // Add OI and option greeks if available
-                result.LatestOI = latestOI;
-                if (Object.keys(optionGreeksData).length > 0) {
-                    result.delta = optionGreeksData.delta;
-                    result.gamma = optionGreeksData.gamma;
-                    result.theta = optionGreeksData.theta;
-                    result.vega = optionGreeksData.vega;
-                    result.impliedVolatility = optionGreeksData.impliedVolatility;
-                    result.optionTradeVolume = optionGreeksData.optionTradeVolume;
-                }
-
-            } catch (error: any) {
-                console.error('Error computing technical indicators:', error);
-                return NextResponse.json({
-                    status: 'error',
-                    message: `Failed to compute indicators: ${error.message}`
-                }, { status: 500 });
-            }
         }
 
         // 6. Generate Excel File
@@ -418,7 +369,7 @@ print(json.dumps(latest_row.to_dict(), default=str))
         XLSX.utils.book_append_sheet(wb, wsDashboard, "Input Dashboard");
 
         // Sheet 2: Technical Indicators
-        if (technicals === "True" && result.timestamp) {
+        if (isTechnicalsEnabled && result.timestamp) {
             const techHeaders = [
                 "request_id", "fetch_time", "timestamp", "symbol", "timeframe", "data_points_used",
                 "open", "high", "low", "close", "volume",

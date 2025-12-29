@@ -46,6 +46,10 @@ const Hero = () => {
           symbol: formData.instrumentSymbol,
           timeframe: formData.timeframe,
           data_time: formData.dataTime || undefined,
+          technicals: formData.includeTechnicalIndicators,
+          fundamentals: formData.includeFundamentals,
+          news: formData.includeNewsSentiment,
+          peers: formData.includePeerBetaAnalysis,
         }),
       });
 
