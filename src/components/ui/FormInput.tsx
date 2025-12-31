@@ -29,8 +29,8 @@ export const FormInput: React.FC<FormInputProps> = ({ label, error, className = 
             text-gray-900 dark:text-white
             placeholder-transparent
             transition-all duration-300
-            focus:border-purple-500 dark:focus:border-purple-400
-            focus:ring-4 focus:ring-purple-500/10
+            focus:border-[var(--primary)]
+            focus:ring-4 focus:ring-[var(--primary)]/10
             focus:bg-white dark:focus:bg-[#1E2329]/50
             ${className}
           `}
@@ -41,8 +41,8 @@ export const FormInput: React.FC<FormInputProps> = ({ label, error, className = 
           className={`
             absolute left-4 transition-all duration-300 pointer-events-none
             ${isFocused || hasValue
-              ? '-top-2.5 text-xs bg-white dark:bg-[#1E2329] px-2 text-purple-600 dark:text-purple-400 font-medium'
-              : 'top-3 text-sm text-gray-500 dark:text-gray-400'
+              ? '-top-2.5 text-xs bg-white dark:bg-[#1E2329] px-2 text-[var(--primary)] font-medium'
+              : 'top-3 text-sm text-gray-500 dark:text-gray-400 span-blue'
             }
           `}
         >

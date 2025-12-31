@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { FormInput } from './ui/FormInput';
 import { Select } from './ui/Select';
 import { Checkbox } from './ui/Checkbox';
-import { Button } from './ui/Button';
+import { Button } from './ui/Button1';
 
 const Hero = () => {
   const [formData, setFormData] = useState({
@@ -90,20 +90,20 @@ const Hero = () => {
   return (
     <section className="flex flex-col items-center justify-center pt-12 sm:pt-16 lg:pt-20 pb-8 sm:pb-12 px-4 relative overflow-hidden">
       {/* Animated gradient background */}
-      <div 
+      <div
         className="absolute inset-0 opacity-30"
         style={{ background: 'var(--gradient-mesh)' }}
       />
-      
+
       {/* Floating orbs */}
       <div className="absolute top-10 left-10 w-64 h-64 bg-purple-400 dark:bg-purple-600 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-20 animate-float-slow" />
       <div className="absolute bottom-10 right-10 w-64 h-64 bg-blue-400 dark:bg-blue-600 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-20 animate-float" style={{ animationDelay: '2s' }} />
 
       <div className="w-full max-w-3xl relative z-10 animate-slide-in-up">
         {/* Glass card with 3D floating effect */}
-        <div className="bg-white/80 dark:bg-[#1E2329]/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-3d animate-float">
+        <div className="bg-[var(--card-bg)]/80 backdrop-blur-xl border border-[var(--card-border)] rounded-2xl p-6 sm:p-8 lg:p-10 shadow-3d animate-float">
           <div className="text-center mb-8">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400 mb-3">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary)] to-indigo-600 mb-3">
               Market Analysis
             </h2>
             <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
@@ -131,8 +131,8 @@ const Hero = () => {
                 onChange={handleInputChange}
               />
               <div className="mt-2 text-left">
-                <a 
-                  href="#" 
+                <a
+                  href="#"
                   className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 text-xs sm:text-sm inline-flex items-center gap-1 transition-colors"
                 >
                   <span className="text-red-500">📍</span>

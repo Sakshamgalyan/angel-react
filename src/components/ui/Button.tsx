@@ -1,77 +1,56 @@
-import React from 'react';
+'use client';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'outline' | 'secondary' | 'gradient';
-  size?: 'sm' | 'md' | 'lg';
-  children: React.ReactNode;
+import clsx from 'clsx';
+import { forwardRef } from 'react';
+
+export type ButtonVariant = 'primary' | 'outline' | 'ghost';
+
+interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  isLoading?: boolean;
 }
 
-export const Button: React.FC<ButtonProps> = ({ 
-  variant = 'primary', 
-  size = 'md', 
-  children, 
-  className = '', 
-  ...props 
-}) => {
-  const baseStyles = `
-    font-semibold rounded-xl 
-    focus:outline-none focus:ring-2 focus:ring-offset-2 
-    transition-all duration-300 
-    disabled:opacity-50 disabled:cursor-not-allowed
-    transform active:scale-95
-    relative overflow-hidden
-  `;
-  
-  const variantStyles = {
-    primary: `
-      bg-purple-600 hover:bg-purple-700 
-      dark:bg-purple-500 dark:hover:bg-purple-600
-      text-white 
-      focus:ring-purple-500
-      shadow-lg hover:shadow-xl
-    `,
-    outline: `
-      border-2 border-purple-600 dark:border-purple-400
-      bg-transparent 
-      hover:bg-purple-50 dark:hover:bg-purple-900/20
-      text-purple-600 dark:text-purple-400
-      focus:ring-purple-500
-    `,
-    secondary: `
-      bg-gray-200 hover:bg-gray-300 
-      dark:bg-gray-700 dark:hover:bg-gray-600 
-      text-gray-900 dark:text-white 
-      focus:ring-gray-500
-      shadow-md hover:shadow-lg
-    `,
-    gradient: `
-      text-white 
-      focus:ring-purple-500
-      shadow-lg hover:shadow-xl
-      hover:scale-[1.02]
-    `,
-  };
-  
-  const sizeStyles = {
-    sm: 'px-4 py-2 text-sm',
-    md: 'px-6 py-3 text-base',
-    lg: 'px-8 py-4 text-lg',
-  };
-  
-  const gradientStyle = variant === 'gradient' ? {
-    background: 'var(--gradient-primary)'
-  } : {};
-  
-  return (
-    <button
-      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
-      style={gradientStyle}
-      {...props}
-    >
-      {variant === 'gradient' && (
-        <span className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 hover:opacity-100 transition-opacity duration-300" />
-      )}
-      <span className="relative z-10">{children}</span>
-    </button>
-  );
+const variantClasses: Record<ButtonVariant, string> = {
+  primary:
+    'bg-blue-600 text-white hover:bg-blue-700',
+  outline:
+    'border border-blue-600 text-blue-600 hover:bg-blue-50',
+  ghost:
+    'text-blue-600 hover:bg-blue-100',
 };
+
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      children,
+      variant = 'primary',
+      isLoading = false,
+      disabled,
+      className,
+      ...props
+    },
+    ref
+  ) => {
+    return (
+      <button
+        ref={ref}
+        disabled={disabled || isLoading}
+        className={clsx(
+          'inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium transition',
+          variantClasses[variant],
+          (disabled || isLoading) &&
+            'opacity-50 cursor-not-allowed',
+          className
+        )}
+        {...props}
+      >
+        {isLoading ? 'Loading...' : children}
+      </button>
+    );
+  }
+);
+
+Button.displayName = 'Button';
+
+export default Button;

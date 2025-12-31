@@ -1,7 +1,7 @@
 'use client';
 
 import StockCard from './StockCard';
-import { useStocks } from '@/context/stocks';
+import { useStocks } from '@/hooks/useStocks';
 
 const StockSection = () => {
   const { stocks, loading, error } = useStocks();

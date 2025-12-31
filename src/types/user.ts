@@ -2,17 +2,41 @@ import { ObjectId } from 'mongodb';
 
 export interface User {
     _id?: ObjectId;
-    email: string;
-    password: string;
     name: string;
+    username:string;
+    email: string;
+    mobile:string;
+    password: string;
+    role:string;
     hasAcceptedTerms: boolean;
+    isLocked: boolean;
+    angelClientCode?: string;
+    angelApiKey?: string;
+    angelTOTPKey?: string;
+    angelPassword?: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface Verification {
+    _id?: ObjectId;
+    mobile: string;
+    otp?: string;
     createdAt: Date;
     updatedAt: Date;
 }
 
 export interface UserResponse {
     id: string;
-    email: string;
     name: string;
+    username?:string;
+    email: string;
+    mobile?:string;
+    role: string;
     hasAcceptedTerms: boolean;
+    isLocked?: boolean;
+    angelClientCode?: string;
+    angelApiKey?: string;
+    angelTOTPKey?: string;
+    angelPassword?: string;
 }
