@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
-import type { User, UserResponse, Verification } from "@/types/user";
+import type { User, UserResponse } from "@/types/user";
 
 export async function POST(req: Request) {
   try {
@@ -31,21 +31,8 @@ export async function POST(req: Request) {
     // Get MongoDB database
     const db = await getDatabase();
     
-    if (verificationToken) {
-        const verification = await db.collection<Verification> ('verification').findOne({ 
-            token: verificationToken,
-            mobile: mobile,
-            expiresAt: { $gt: new Date() }
-        });
-        
-        if (!verification) {
-            return NextResponse.json({ error: "Invalid or expired verification token" }, { status: 400 });
-        }
-        
-        await db.collection<Verification>('verification').deleteOne({ token: verificationToken });
-    } else {
-         return NextResponse.json({ error: "Mobile verification required" }, { status: 400 });
-    }
+    // Verification logic removed as per user request
+    // if (verificationToken) { ... }
 
     const usersCollection = db.collection<User>("users");
 
