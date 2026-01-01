@@ -30,8 +30,16 @@ export async function GET() {
 
     const userResponse: UserResponse = {
       id: user._id!.toString(),
-      email: user.email,
       name: user.name,
+      username: user.username,
+      email: user.email,
+      mobile: user.mobile,
+      role: user.role,
+      angelApiKey: user.angelApiKey,
+      angelClientCode: user.angelClientCode,
+      angelPassword: user.angelPassword,
+      angelTOTPKey: user.angelTOTPKey,
+      isLocked: user.isLocked,
       hasAcceptedTerms: user.hasAcceptedTerms,
     };
 

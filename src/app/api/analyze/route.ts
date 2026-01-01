@@ -4,6 +4,10 @@ import path from 'path';
 import fs from 'fs';
 import * as XLSX from 'xlsx';
 import { fetchTechnicalIndicators } from '@/lib/technical-indicators';
+import { cookies } from 'next/headers';
+import { getDatabase } from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
+import { User } from '@/types/user';
 
 // Helper to find symbol info
 const getSymbolInfo = (symbol: string) => {
@@ -107,7 +111,16 @@ const INDICATOR_COLUMNS = [
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { symbol, timeframe, data_time, technicals = "False", fundamentals = "False", news = "False", peers = "False" } = body;
+        const { symbol, timeframe, data_time, technicals, fundamentals, news, peers } = body;
+
+        // Helper to parse boolean or string 'true'/'false'
+        const parseBoolean = (val: any) => {
+            if (typeof val === 'boolean') return val;
+            if (typeof val === 'string') return val.toLowerCase() === 'true';
+            return false;
+        };
+
+        const isTechnicalsEnabled = parseBoolean(technicals);
 
         if (!symbol || !timeframe) {
             return NextResponse.json({ error: 'Missing symbol or timeframe' }, { status: 400 });
@@ -115,10 +128,52 @@ export async function POST(req: Request) {
 
         console.log(`Received request: symbol=${symbol}, timeframe=${timeframe}, data_time=${data_time}, technicals=${technicals}`);
 
+        const cookieStore = await cookies();
+        const authToken = cookieStore.get('auth-token');
+
+        if (!authToken || !authToken.value || !ObjectId.isValid(authToken.value)) {
+            return NextResponse.json({ error: 'Unauthorized: No valid session found' }, { status: 401 });
+        }
+
+        const db = await getDatabase();
+        const user = await db.collection<User>('users').findOne({ _id: new ObjectId(authToken.value) });
+
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized: User not found' }, { status: 401 });
+        }
+
+        const { angelApiKey, angelClientCode, angelTOTPKey, angelPassword } = user;
+
+        const handleLockout = async (msg: string, status: number) => {
+             await db.collection('users').updateOne({ _id: user._id }, { $inc: { failedLoginAttempts: 1 } });
+             const updatedUser = await db.collection('users').findOne({ _id: user._id });
+             if (updatedUser && (updatedUser.failedLoginAttempts || 0) >= 5) {
+                 await db.collection('users').updateOne({ _id: user._id }, { 
+                     $set: { isLocked: true, locked: true, lockedAt: new Date().toISOString(), isLockedAt: new Date().toISOString() } 
+                 });
+                 return NextResponse.json({ error: 'Account locked due to multiple failed attempts. Please wait 24 hours.' }, { status: 403 });
+             }
+             return NextResponse.json({ error: msg }, { status: status });
+        };
+
+        if (!angelApiKey || !angelClientCode || !angelTOTPKey || !angelPassword) {
+            return NextResponse.json({ 
+                error: 'Missing Angel One credentials. Please configure them in your settings.' 
+            }, { status: 400 });
+        }
+
+        const credentials = {
+            apiKey: angelApiKey,
+            clientCode: angelClientCode,
+            password: angelPassword,
+            totpKey: angelTOTPKey
+        };
+        console.log('Credentials:', credentials);
+
         // 1. Get Symbol Info
         const symbolInfo = getSymbolInfo(symbol);
         if (!symbolInfo) {
-            return NextResponse.json({ error: 'Symbol not found in instruments.json' }, { status: 400 });
+            return await handleLockout('Symbol not found.', 400);
         }
 
         const symbolToken = symbolInfo.token;
@@ -162,20 +217,43 @@ export async function POST(req: Request) {
 
         // 3. Fetch Data in Parallel
         const dataPromises: Promise<any>[] = [
-            fetchCandleData(exchange, symbolToken, config.interval, formatDate(startTime), formatDate(endTime)),
-            fetchOIData(exchange, symbolToken, config.interval, formatDate(startTime), formatDate(endTime)),
-            fetchMarketData('FULL', { [exchange]: [symbolToken] })
+            fetchCandleData(credentials,exchange, symbolToken, config.interval, formatDate(startTime), formatDate(endTime)),
+            fetchOIData(credentials, exchange, symbolToken, config.interval, formatDate(startTime), formatDate(endTime)),
+            fetchMarketData(credentials, 'FULL', { [exchange]: [symbolToken] })
         ];
 
         // Add option greeks if applicable
         if (optionType && expiry && strike && name) {
-            dataPromises.push(fetchOptionGreeks(name, expiry));
+            dataPromises.push(fetchOptionGreeks(credentials, name, expiry));
         }
 
         const results = await Promise.allSettled(dataPromises);
-
-        // Process candle data
+        
+        // Check for rejection due to credentials in Candle Data (primary fetch) specifically or any critical failure
         const candleResult = results[0];
+        
+        if (candleResult.status === 'rejected') {
+             const error = candleResult.reason;
+             const errorMessage = error?.message?.toLowerCase() || '';
+             
+             console.log('[DEBUG] Angel API Error Message:', errorMessage);
+             console.log('[DEBUG] Angel API Full Error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+
+             if (errorMessage.includes('invalid') || errorMessage.includes('credential') || errorMessage.includes('login') || errorMessage.includes('ab1004') || errorMessage.includes('unauthorized')) {
+                  console.log('[DEBUG] Detected Auth Error.');
+                  return await handleLockout('Angel One Login Failed. Please check your credentials.', 401);
+             } else {
+                 console.log('[DEBUG] Error did not match auth keywords.');
+             }
+        } else {
+            // Success - Reset failed attempts if any existed
+             if ((user.failedLoginAttempts || 0) > 0) {
+                 await db.collection('users').updateOne(
+                     { _id: user._id },
+                     { $set: { failedLoginAttempts: 0 } }
+                 );
+             }
+        }
         if (candleResult.status === 'rejected' || !candleResult.value || candleResult.value.length === 0) {
             console.error('Failed to fetch candle data');
             return NextResponse.json({ error: 'No candle data found' }, { status: 500 });
@@ -291,7 +369,7 @@ export async function POST(req: Request) {
         };
 
         // 5. Calculate Technical Indicators (TypeScript)
-        const isTechnicalsEnabled = String(technicals).toLowerCase() === 'true';
+        // isTechnicalsEnabled is already parsed above
         if (isTechnicalsEnabled && candles.length > 0) {
                 try {
                     console.log(`[Debug] Calculating technical indicators for ${candles.length} candles...`);

@@ -1,6 +1,13 @@
 import { SmartAPI } from 'smartapi-javascript';
 import { TOTP } from 'totp-generator';
 
+export interface AngelCredentials {
+    apiKey: string;
+    clientCode: string;
+    password: string;
+    totpKey: string;
+}
+
 // Interface for Candle Data
 export interface CandleData {
     timestamp: string;
@@ -11,24 +18,22 @@ export interface CandleData {
     volume: number;
 }
 
-let smartApiInstance: any = null;
-let sessionData: any = null;
+// Cache for sessions: apiKey -> { instance: SmartAPI, sessionData: any, token: string }
+const sessionCache = new Map<string, { instance: any, sessionData: any }>();
 
-export const getAngelClient = async () => {
-    if (smartApiInstance && sessionData) {
-        return smartApiInstance;
-    }
-
-    const apiKey = process.env.ANGEL_API_KEY;
-    const clientCode = process.env.ANGEL_CLIENT_CODE;
-    const password = process.env.ANGEL_PASSWORD;
-    const totpKey = process.env.ANGEL_TOTP_KEY;
+export const getAngelClient = async (credentials: AngelCredentials) => {
+    const { apiKey, clientCode, password, totpKey } = credentials;
 
     if (!apiKey || !clientCode || !password || !totpKey) {
-        throw new Error('Missing Angel One credentials in environment variables');
+        throw new Error('Missing Angel One credentials');
     }
 
-    smartApiInstance = new SmartAPI({
+    // Check if valid session exists
+    if (sessionCache.has(apiKey)) {
+        return sessionCache.get(apiKey)!.instance;
+    }
+
+    const smartApiInstance = new SmartAPI({
         api_key: apiKey,
     });
 
@@ -36,7 +41,12 @@ export const getAngelClient = async () => {
 
     try {
         const data = await smartApiInstance.generateSession(clientCode, password, otp);
-        sessionData = data;
+        
+        if (data.status === false) {
+             throw new Error(data.message || 'Login failed');
+        }
+
+        sessionCache.set(apiKey, { instance: smartApiInstance, sessionData: data });
         return smartApiInstance;
     } catch (error) {
         console.error('Angel One Login Failed:', error);
@@ -45,27 +55,28 @@ export const getAngelClient = async () => {
 };
 
 // Retry helper
-const retry = async <T>(fn: () => Promise<T>, retries = 3, delay = 500): Promise<T> => {
+const retry = async <T>(fn: () => Promise<T>, credentials: AngelCredentials, retries = 3, delay = 500): Promise<T> => {
     try {
         return await fn();
     } catch (error: any) {
         if (retries > 0) {
-            // Check for session expiry (AB1004)
-            if (error.message && error.message.toLowerCase().includes('ab1004')) {
-                console.log('Session expired (AB1004), re-authenticating...');
-                smartApiInstance = null;
-                sessionData = null;
-                await getAngelClient();
+            // Check for session expiry (AB1004) or "Invalid Session"
+            const errorMessage = error.message ? error.message.toLowerCase() : '';
+            if (errorMessage.includes('ab1004') || errorMessage.includes('invalid session') || errorMessage.includes('invalid token')) {
+                console.log(`Session expired for ${credentials.clientCode}, re-authenticating...`);
+                sessionCache.delete(credentials.apiKey);
+                // Re-authenticate inside the retry loop effectively by clearing cache
             }
 
             await new Promise(resolve => setTimeout(resolve, delay));
-            return retry(fn, retries - 1, delay * 2);
+            return retry(fn, credentials, retries - 1, delay * 2);
         }
         throw error;
     }
 };
 
 export const fetchCandleData = async (
+    credentials: AngelCredentials,
     exchange: string,
     symbolToken: string,
     interval: string,
@@ -73,7 +84,7 @@ export const fetchCandleData = async (
     toDate: string
 ): Promise<any[]> => {
     return retry(async () => {
-        const client = await getAngelClient();
+        const client = await getAngelClient(credentials);
         try {
             const response = await client.getCandleData({
                 exchange,
@@ -92,10 +103,11 @@ export const fetchCandleData = async (
             console.error('Error fetching candle data:', error);
             throw error;
         }
-    });
+    }, credentials);
 };
 
 export const fetchOIData = async (
+    credentials: AngelCredentials,
     exchange: string,
     symbolToken: string,
     interval: string,
@@ -103,7 +115,7 @@ export const fetchOIData = async (
     toDate: string
 ): Promise<any[]> => {
     return retry(async () => {
-        const client = await getAngelClient();
+        const client = await getAngelClient(credentials);
         try {
             const response = await client.getOIData({
                 exchange,
@@ -123,15 +135,16 @@ export const fetchOIData = async (
             console.error('Error fetching OI data:', error);
             return [];
         }
-    });
+    }, credentials);
 };
 
 export const fetchMarketData = async (
+    credentials: AngelCredentials,
     mode: string,
     exchangeTokens: Record<string, string[]>
 ): Promise<any[]> => {
     return retry(async () => {
-        const client = await getAngelClient();
+        const client = await getAngelClient(credentials);
         try {
             const response = await client.marketData({
                 mode: mode,
@@ -149,15 +162,16 @@ export const fetchMarketData = async (
             console.error('Error fetching market data:', error);
             return [];
         }
-    });
+    }, credentials);
 };
 
 export const fetchOptionGreeks = async (
+    credentials: AngelCredentials,
     name: string,
     expiryDate: string
 ): Promise<any[]> => {
     return retry(async () => {
-        const client = await getAngelClient();
+        const client = await getAngelClient(credentials);
         try {
             const response = await client.optionGreek({
                 name,
@@ -174,5 +188,5 @@ export const fetchOptionGreeks = async (
             console.error('Error fetching option greeks:', error);
             return [];
         }
-    });
+    }, credentials);
 };

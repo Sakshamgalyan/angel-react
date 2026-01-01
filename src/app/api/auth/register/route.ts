@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
-import type { User, UserResponse } from "@/types/user";
+import type { User, UserResponse, Verification } from "@/types/user";
 
 export async function POST(req: Request) {
   try {
@@ -9,41 +9,71 @@ export async function POST(req: Request) {
 
     const email = (body?.email ?? "").toString().toLowerCase().trim();
     const password = (body?.password ?? "").toString();
-    const name = (body?.name ?? "").toString().trim();
+    const username = (body?.username ?? "").toString().trim();
+    const mobile = (body?.mobile ?? "").toString().trim();
+    const verificationToken = (body?.verificationToken ?? "").toString().trim();
 
-    if (!email || !password || !name) {
+    if (!email || !password || !username || !mobile) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Quick email format check
+    // Quick validations
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 });
     }
-
-    // Password strength check
-    if (password.length < 6) {
-      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
+    if (password.length < 8) {
+      return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
+    }
+    if (!/^\d{10}$/.test(mobile)) {
+        return NextResponse.json({ error: "Invalid mobile number" }, { status: 400 });
     }
 
     // Get MongoDB database
     const db = await getDatabase();
+    
+    if (verificationToken) {
+        const verification = await db.collection<Verification> ('verification').findOne({ 
+            token: verificationToken,
+            mobile: mobile,
+            expiresAt: { $gt: new Date() }
+        });
+        
+        if (!verification) {
+            return NextResponse.json({ error: "Invalid or expired verification token" }, { status: 400 });
+        }
+        
+        await db.collection<Verification>('verification').deleteOne({ token: verificationToken });
+    } else {
+         return NextResponse.json({ error: "Mobile verification required" }, { status: 400 });
+    }
+
     const usersCollection = db.collection<User>("users");
 
-    // Check if user already exists
-    const existingUser = await usersCollection.findOne({ email });
+    const existingUser = await usersCollection.findOne({ 
+        $or: [{ email }, { mobile }, { username }] 
+    });
+    
     if (existingUser) {
-      return NextResponse.json({ error: "User already exists" }, { status: 400 });
+        let field = "User";
+        if (existingUser.email === email) field = "Email";
+        if (existingUser.mobile === mobile) field = "Mobile";
+        if (existingUser.username === username) field = "Username";
+      return NextResponse.json({ error: `${field} already exists` }, { status: 400 });
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const newUser: Omit<User, '_id'> = {
+    const newUser: any = {
       email,
+      username,
+      mobile,
       password: hashedPassword,
-      name,
-      hasAcceptedTerms: false,
+      name: username,
+      role: "merchant",
+      hasAcceptedTerms: true,
+      isVerified: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -54,12 +84,13 @@ export async function POST(req: Request) {
     const userResponse: UserResponse = {
       id: result.insertedId.toString(),
       email,
-      name,
+      name: username,
+      role: "merchant",
       hasAcceptedTerms: false,
     };
 
     // Create response with user data
-    const response = NextResponse.json({ user: userResponse }, { status: 201 });
+    const response = NextResponse.json({ user: userResponse, success: true }, { status: 201 });
 
     // Set HTTP-only cookie for authentication
     response.cookies.set('auth-token', result.insertedId.toString(), {
@@ -72,17 +103,9 @@ export async function POST(req: Request) {
 
     return response;
   } catch (error: any) {
-    console.error("Registration error:", {
-      message: error?.message,
-      code: error?.code,
-      stack: error?.stack,
-    });
-
+    console.error("Registration error:", error);
     return NextResponse.json(
-      {
-        error: "Internal server error",
-        hint: process.env.NODE_ENV === 'development' ? error?.message : undefined,
-      },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

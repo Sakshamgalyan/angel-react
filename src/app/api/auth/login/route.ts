@@ -1,46 +1,53 @@
-import { NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/mongodb';
-import bcrypt from 'bcryptjs';
-import type { User, UserResponse } from '@/types/user';
+import { NextResponse } from "next/server";
+import { getDatabase } from "@/lib/mongodb";
+import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const { identifier, password } = await req.json();
 
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!identifier || !password) {
+      return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
     }
 
-    // Get MongoDB database
     const db = await getDatabase();
-    const usersCollection = db.collection<User>('users');
+    const usersCollection = db.collection("users");
 
-    // Find user by email
-    const user = await usersCollection.findOne({ email: email.toLowerCase().trim() });
+    const user = await usersCollection.findOne({
+      $or: [
+        { email: identifier.toLowerCase() },
+        { username: identifier },
+        { mobile: identifier }
+      ]
+    });
 
     if (!user) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    // Verify password
     const isValid = await bcrypt.compare(password, user.password);
 
     if (!isValid) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    const userResponse: UserResponse = {
-      id: user._id!.toString(),
-      email: user.email,
+    const userResponse = {
+      id: user._id.toString(),
       name: user.name,
-      hasAcceptedTerms: user.hasAcceptedTerms,
+      username: user.username,
+      email: user.email,
+      mobile: user.mobile,
+      role: user.role,
+      hasAcceptedTerms: user.hasAcceptedTerms
     };
 
-    // Create response with user data
-    const response = NextResponse.json({ user: userResponse });
+    const response = NextResponse.json({ 
+        user: userResponse,
+        success: true, 
+    });
 
-    // Set HTTP-only cookie for authentication
-    response.cookies.set('auth-token', user._id!.toString(), {
+    // Set auth cookie
+    response.cookies.set('auth-token', user._id.toString(), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -49,8 +56,9 @@ export async function POST(req: Request) {
     });
 
     return response;
+
   } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Login error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

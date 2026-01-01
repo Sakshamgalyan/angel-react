@@ -8,58 +8,68 @@
 /* ===== CSS Variables ===== */
 :root {
     /* Light Mode Colors */
-    --background: #F8FAFC;
-    --foreground: #0F172A;
+    --primary: #2563EB;
+    /* blue-600 */
+    --background: #FFFFFF;
+    --foreground: #000000;
     --card-bg: #FFFFFF;
-    --card-border: #E2E8F0;
-    --input-bg: #F1F5F9;
-    --input-border: #CBD5E1;
-    --input-focus: #3B82F6;
-    --text-primary: #0F172A;
-    --text-secondary: #64748B;
-    --text-muted: #94A3B8;
-    
+    --card-border: #E5E7EB;
+    --input-bg: #F3F4F6;
+    --input-border: #D1D5DB;
+    --input-focus: var(--primary);
+    --text-primary: #000000;
+    --text-secondary: #4B5563;
+    --text-muted: #9CA3AF;
+
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-primary: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%);
+    /* Blue to Indigo */
     --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     --gradient-success: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-    --gradient-mesh: radial-gradient(at 40% 20%, hsla(28,100%,74%,0.3) 0px, transparent 50%),
-                     radial-gradient(at 80% 0%, hsla(189,100%,56%,0.3) 0px, transparent 50%),
-                     radial-gradient(at 0% 50%, hsla(355,100%,93%,0.3) 0px, transparent 50%),
-                     radial-gradient(at 80% 50%, hsla(340,100%,76%,0.3) 0px, transparent 50%);
-    
+    --gradient-mesh: radial-gradient(at 40% 20%, hsla(221, 100%, 53%, 0.3) 0px, transparent 50%),
+        radial-gradient(at 80% 0%, hsla(189, 100%, 56%, 0.3) 0px, transparent 50%),
+        radial-gradient(at 0% 50%, hsla(355, 100%, 93%, 0.3) 0px, transparent 50%),
+        radial-gradient(at 80% 50%, hsla(340, 100%, 76%, 0.3) 0px, transparent 50%);
+
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    --shadow-3d: 0 10px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-sm: 0 1px 2px 0 rgba(37, 99, 235, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(37, 99, 235, 0.1), 0 2px 4px -1px rgba(37, 99, 235, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(37, 99, 235, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(37, 99, 235, 0.1), 0 10px 10px -5px rgba(37, 99, 235, 0.04);
+    --shadow-3d: 0 10px 40px rgba(37, 99, 235, 0.15), 0 4px 12px rgba(37, 99, 235, 0.1);
 }
 
 :root.dark {
     /* Dark Mode Colors */
-    --background: #0B0E14;
-    --foreground: #ffffff;
-    --card-bg: #1E2329;
-    --card-border: #2A2E37;
-    --input-bg: #0B0E14;
-    --input-border: #2A2E37;
-    --input-focus: #667eea;
+    --primary: #3B82F6;
+    /* blue-500 for better contrast */
+    --background: #111827;
+    /* Gray-900 */
+    --foreground: #FFFFFF;
+    --card-bg: #1F2937;
+    /* Gray-800 */
+    --card-border: #374151;
+    /* Gray-700 */
+    --input-bg: #111827;
+    --input-border: #374151;
+    --input-focus: var(--primary);
     --text-primary: #FFFFFF;
-    --text-secondary: #94A3B8;
-    --text-muted: #64748B;
-    
+    --text-secondary: #9CA3AF;
+    /* Gray-400 */
+    --text-muted: #6B7280;
+    /* Gray-500 */
+
     /* Gradients - slightly adjusted for dark mode */
-    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-primary: linear-gradient(135deg, #3B82F6 0%, #6366F1 100%);
     --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     --gradient-success: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-    --gradient-mesh: radial-gradient(at 40% 20%, hsla(28,100%,74%,0.15) 0px, transparent 50%),
-                     radial-gradient(at 80% 0%, hsla(189,100%,56%,0.15) 0px, transparent 50%),
-                     radial-gradient(at 0% 50%, hsla(355,100%,93%,0.15) 0px, transparent 50%),
-                     radial-gradient(at 80% 50%, hsla(340,100%,76%,0.15) 0px, transparent 50%);
-    
+    --gradient-mesh: radial-gradient(at 40% 20%, hsla(221, 100%, 60%, 0.15) 0px, transparent 50%),
+        radial-gradient(at 80% 0%, hsla(189, 100%, 56%, 0.15) 0px, transparent 50%),
+        radial-gradient(at 0% 50%, hsla(355, 100%, 93%, 0.15) 0px, transparent 50%),
+        radial-gradient(at 80% 50%, hsla(340, 100%, 76%, 0.15) 0px, transparent 50%);
+
     /* Shadows - enhanced for dark mode */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
@@ -82,28 +92,37 @@ body {
 
 /* ===== 3D Animation Keyframes ===== */
 @keyframes float {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translateY(0px) rotateX(0deg);
     }
+
     50% {
         transform: translateY(-20px) rotateX(2deg);
     }
 }
 
 @keyframes floatSlow {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translateY(0px);
     }
+
     50% {
         transform: translateY(-10px);
     }
 }
 
 @keyframes pulse3d {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
         box-shadow: var(--shadow-lg);
     }
+
     50% {
         transform: scale(1.05);
         box-shadow: var(--shadow-xl);
@@ -115,6 +134,7 @@ body {
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -126,6 +146,7 @@ body {
         opacity: 0;
         transform: translateY(-30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -136,6 +157,7 @@ body {
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -145,6 +167,7 @@ body {
     0% {
         background-position: -1000px 0;
     }
+
     100% {
         background-position: 1000px 0;
     }
@@ -158,9 +181,12 @@ body {
 }
 
 @keyframes gradientShift {
-    0%, 100% {
+
+    0%,
+    100% {
         background-position: 0% 50%;
     }
+
     50% {
         background-position: 100% 50%;
     }
@@ -239,21 +265,23 @@ body {
 
 /* ===== Responsive Utilities ===== */
 @media (max-width: 767px) {
+
     /* Mobile styles */
     .container-mobile {
         padding: 1rem;
     }
-    
+
     .text-mobile-lg {
         font-size: 1.5rem;
     }
-    
+
     .text-mobile-base {
         font-size: 1rem;
     }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
+
     /* Tablet styles */
     .container-tablet {
         padding: 2rem;
@@ -261,6 +289,7 @@ body {
 }
 
 @media (min-width: 1024px) {
+
     /* Desktop styles */
     .container-desktop {
         padding: 3rem;
@@ -310,4 +339,61 @@ body {
 ::selection {
     background: rgba(102, 126, 234, 0.3);
     color: var(--text-primary);
+}
+
+@layer components {
+  .navbar {
+    @apply sticky top-0 z-30 flex items-center justify-between px-6 py-4
+           backdrop-blur-md border-b transition-colors;
+    background-color: rgb(var(--background) / 0.8);
+    border-color: rgb(var(--border));
+  }
+
+  .navbar__logo {
+    @apply text-2xl font-bold tracking-tight;
+    color: rgb(var(--primary));
+  }
+
+  .navbar__actions {
+    @apply flex items-center gap-4;
+  }
+
+  .icon-btn {
+    @apply w-9 h-9 flex items-center justify-center rounded-full
+           transition-all duration-200 border;
+    background-color: rgb(var(--surface));
+    border-color: rgb(var(--border));
+    color: rgb(var(--primary));
+  }
+
+  .icon-btn:hover {
+    @apply shadow-sm;
+  }
+
+  .icon {
+    @apply w-5 h-5;
+  }
+
+  .light-only {
+    @apply dark:hidden;
+  }
+
+  .dark-only {
+    @apply hidden dark:block;
+  }
+
+  .navbar__user {
+    @apply flex flex-col border-l pl-4 ml-2 text-right;
+    border-color: rgb(var(--border));
+  }
+
+  .navbar__username {
+    @apply text-sm font-semibold leading-tight;
+    color: rgb(var(--primary));
+  }
+
+  .navbar__role {
+    @apply text-xs font-medium;
+    color: rgb(var(--muted));
+  }
 }

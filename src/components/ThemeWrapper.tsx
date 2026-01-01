@@ -1,6 +1,6 @@
 'use client';
 
-import { useTheme } from '@/context/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useEffect } from 'react';
 
 export default function ThemeWrapper({ children }: { children: React.ReactNode }) {
