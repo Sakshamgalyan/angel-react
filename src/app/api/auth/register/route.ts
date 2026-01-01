@@ -10,10 +10,11 @@ export async function POST(req: Request) {
     const email = (body?.email ?? "").toString().toLowerCase().trim();
     const password = (body?.password ?? "").toString();
     const username = (body?.username ?? "").toString().trim();
+    const name = (body?.name ?? "").toString();
     const mobile = (body?.mobile ?? "").toString().trim();
     const verificationToken = (body?.verificationToken ?? "").toString().trim();
 
-    if (!email || !password || !username || !mobile) {
+    if (!email || !password || !username || !mobile || !name) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -57,7 +58,7 @@ export async function POST(req: Request) {
       username,
       mobile,
       password: hashedPassword,
-      name: username,
+      name: name,
       role: "merchant",
       hasAcceptedTerms: true,
       isVerified: true,
@@ -71,7 +72,7 @@ export async function POST(req: Request) {
     const userResponse: UserResponse = {
       id: result.insertedId.toString(),
       email,
-      name: username,
+      name: name,
       role: "merchant",
       hasAcceptedTerms: false,
     };
