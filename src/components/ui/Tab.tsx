@@ -25,7 +25,7 @@ export function Tabs<T extends string>({
     return (
         <div
             className={clsx(
-                'rounded-lg bg-gray-100 p-1',
+                'rounded-lg bg-zinc-100 p-1 border border-zinc-200 dark:border-zinc-700',
                 fullWidth ? 'flex w-full' : 'inline-flex',
                 className
             )}
@@ -38,11 +38,11 @@ export function Tabs<T extends string>({
                         key={tab.id}
                         onClick={() => onChange(tab.id)}
                         className={clsx(
-                            'px-4 py-2 text-sm rounded-md transition-all',
+                            'px-4 py-2 text-sm font-medium rounded-md transition-all',
                             fullWidth && 'flex-1',
                             isActive
                                 ? 'bg-blue-600 text-white shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-200'
+                                : 'text-zinc-600 hover:bg-blue-50 dark:hover:bg-blue-50'
                         )}
                     >
                         {tab.label}

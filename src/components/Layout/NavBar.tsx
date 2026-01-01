@@ -46,7 +46,7 @@ const NavBar = () => {
           <button
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className="flex items-center text-black dark:text-slate-300 hover:bg-red-600 transition-all p-2 px-4 rounded-md bg-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center text-black dark:text-slate-300 hover:bg-red-600 transition-all p-2 px-4 hover:cursor-pointer rounded-md bg-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoggingOut ? "Logging out..." : "Log Out"}
           </button>

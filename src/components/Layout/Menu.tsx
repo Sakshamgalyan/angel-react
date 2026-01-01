@@ -28,15 +28,15 @@ const Menu = () => {
       title: "Merchant",
       items: [
         { icon: <LayoutDashboard />, label: "Dashboard", href: "/home", visible: ["admin", "merchant"] },
-        { icon: <Key />, label: "Angel Credentials", href: "/angel-credentials", visible: ["admin", "merchant"] },
+        { icon: <Key />, label: "Angel Credentials", href: "/home/angel-credentials", visible: ["admin", "merchant"] },
       ],
     },
     {
       title: "Others",
       items: [
-        { icon: <Cog />, label: "Admin Settings", href: "/admin-settings", visible: ["admin"] },
+        { icon: <Cog />, label: "Admin Settings", href: "/home/admin-settings", visible: ["admin"] },
         { icon: <EarthLock />, label: "Privacy-Policy", href: "/privacy-policy", visible: ["admin", "merchant"] },
-        { icon: <Cog />, label: "Settings", href: "/settings", visible: ["admin", "merchant"] },
+        { icon: <Cog />, label: "Settings", href: "/home/settings", visible: ["admin", "merchant"] },
       ],
     },
   ];

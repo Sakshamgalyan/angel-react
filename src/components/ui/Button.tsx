@@ -13,11 +13,11 @@ interface ButtonProps
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-blue-600 text-white hover:bg-blue-700',
+    'bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500',
   outline:
-    'border border-blue-600 text-blue-600 hover:bg-blue-50',
+    'border border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10',
   ghost:
-    'text-blue-600 hover:bg-blue-100',
+    'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10',
 };
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -40,7 +40,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           'inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium transition',
           variantClasses[variant],
           (disabled || isLoading) &&
-            'opacity-50 cursor-not-allowed',
+          'opacity-50 cursor-not-allowed',
           className
         )}
         {...props}

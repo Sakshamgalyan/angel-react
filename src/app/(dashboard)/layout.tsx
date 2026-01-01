@@ -1,5 +1,5 @@
 import { ReduxProvider } from "@/store/ReduxProvider";
-import AuthInitializer from "@/components/AuthInitializer";
+import AuthInitializer from "@/components/auth/AuthInitializer";
 import { AuthProvider } from "@/context/auth";
 import { AuthFormProvider } from "@/context/auth/AuthFormContext";
 import ThemeWrapper from "@/components/ThemeWrapper";

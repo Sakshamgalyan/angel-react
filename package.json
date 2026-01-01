@@ -19,6 +19,7 @@
     "next": "^16.1.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+    "react-hot-toast": "^2.6.0",
     "react-redux": "^9.2.0",
     "redux-saga": "^1.4.2",
     "smartapi-javascript": "^1.0.27",
